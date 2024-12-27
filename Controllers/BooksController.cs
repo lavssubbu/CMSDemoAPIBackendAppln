@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CMSDemoAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace CMSDemoAPI.Controllers
 {
@@ -32,18 +33,18 @@ namespace CMSDemoAPI.Controllers
 
         // GET: api/Books/5
         [HttpGet("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,User")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
+            var book = await _context.Books.FirstOrDefaultAsync(x => x.BookId == id);
 
             if (book == null)
             {
                 return NotFound();
             }
 
-            return book;
-        }
+			return book;
+		}
 
         // PUT: api/Books/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -81,13 +82,30 @@ namespace CMSDemoAPI.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Book>> PostBook(Book book)
+        public async Task<IActionResult> PostBook([FromBody]Book book)
         {
-            book.PublishedYear = new DateTime(book.PublishedYear.Year, 1, 1);
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
+            if (book == null)
+            {
+                return BadRequest("Invalid book data.");
+            }
 
-            return CreatedAtAction("GetBook", new { id = book.BookId }, book);
+            if (!ModelState.IsValid) // Check for model state errors
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                _context.Books.Add(book);
+                _context.Entry(book).State = EntityState.Added;
+                await _context.SaveChangesAsync();
+                return NoContent(); // Return the created book
+            }
+            catch (Exception ex)
+            {
+               // _logger.LogError(ex, "Error while saving book data");
+                return StatusCode(500, "Internal server error");
+            }
+           
         }
 
         // DELETE: api/Books/5

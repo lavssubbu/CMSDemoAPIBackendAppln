@@ -5,7 +5,7 @@ namespace CMSDemoAPI.Models
     public class Book
     {
         [Key]
-        public int BookId { get; set; }
+        public int? BookId { get; set; }
 
         [MaxLength(100)]
         public string? BookName { get; set; }
@@ -18,6 +18,6 @@ namespace CMSDemoAPI.Models
         public DateTime PublishedYear { get; set; }
 
         //Navigation Property
-        public ICollection<BookAuthor> bookAuthors { get; set; }
+        public ICollection<BookAuthor>? bookAuthors { get; set; }
     }
 }

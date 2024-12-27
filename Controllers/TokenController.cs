@@ -24,9 +24,11 @@ namespace CMSDemoAPI.Controllers
 
         }
         [HttpPost]
-        public string GenerateToken(User user)
+        public IActionResult GenerateToken(User luser)
         {
             string token = string.Empty;
+            // Retrieve the full user details from the database
+            var user = _context.Users.FirstOrDefault(u => u.email == luser.email && u.password == luser.password && u.role==luser.role);
             if (ValidateUser(user.email, user.password,user.role))
             {
                 var claims = new List<Claim>
@@ -46,11 +48,11 @@ namespace CMSDemoAPI.Controllers
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var createToken = tokenHandler.CreateToken(tokenDescription);
                 token = tokenHandler.WriteToken(createToken);
-                return token;
+                return Ok(new { token, role = user.role });
             }
             else
             {
-                return string.Empty;
+                return BadRequest(new { message = "Invalid email or password" });
             }
         }
         private bool ValidateUser(string email, string password,string requiredrole)
